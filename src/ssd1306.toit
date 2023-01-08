@@ -65,8 +65,8 @@ Black-and-white driver for an SSD1306 or SSD1309 connected I2C.
 class I2cSsd1306_ extends SSD1306:
   i2c_ / i2c.Device
 
-  constructor .i2c_ --reset/gpio.Pin?=null:
-    super.from_subclass_ --reset=reset
+  constructor .i2c_ --reset/gpio.Pin?=null --h32px/bool?=false:
+    super.from_subclass_ --reset=reset --h32px=h32px
 
   buffer_header_size_: return 1
 
@@ -84,8 +84,8 @@ Black-and-white driver for an SSD1306 or SSD1309 connected over SPI.
 class SpiSsd1306_ extends SSD1306:
   device_ / spi.Device
 
-  constructor .device_ --reset/gpio.Pin?=null:
-    super.from_subclass_ --reset=reset
+  constructor .device_ --reset/gpio.Pin?=null --h32px/bool?=false:
+    super.from_subclass_ --reset=reset --h32px=h32px
 
   buffer_header_size_: return 0
 
@@ -122,8 +122,8 @@ abstract class SSD1306 extends Ssd1306:
   constructor.spi device/spi.Device --reset/gpio.Pin?=null:
     return SpiSsd1306_ device --reset=reset
 
-  constructor.from_subclass_ --reset/gpio.Pin?:
-    super.from_subclass_ --reset=reset
+  constructor.from_subclass_ --reset/gpio.Pin? --h32px/bool?:
+    super.from_subclass_ --reset=reset --h32px=h32px
 
   abstract buffer_header_size_ -> int
   abstract send_command_buffer_ buffer -> none
@@ -139,19 +139,22 @@ abstract class Ssd1306 extends AbstractDriver:
   static I2C_ADDRESS ::= 0x3c
   static I2C_ADDRESS_ALT ::= 0x3d
 
+  h32px / bool
+
+
   /**
   Deprecated. Use the $Ssd1306.i2c constructor instead.
   */
   constructor device/i2c.Device:
     return Ssd1306.i2c device
 
-  constructor.i2c device/i2c.Device --reset/gpio.Pin?=null:
-    return I2cSsd1306_ device --reset=reset
+  constructor.i2c device/i2c.Device --reset/gpio.Pin?=null --h32px/bool?=false:
+    return I2cSsd1306_ device --reset=reset --h32px=h32px
 
-  constructor.spi device/spi.Device --reset/gpio.Pin?=null:
-    return SpiSsd1306_ device --reset=reset
+  constructor.spi device/spi.Device --reset/gpio.Pin?=null --h32px/bool?=false:
+    return SpiSsd1306_ device --reset=reset --h32px=h32px
 
-  constructor.from_subclass_ --reset/gpio.Pin?:
+  constructor.from_subclass_ --reset/gpio.Pin? .h32px:
     if reset:
       reset.set 0
       sleep --ms=50
@@ -181,7 +184,10 @@ abstract class Ssd1306 extends AbstractDriver:
     command_ SSD1306_SETMEMORYMODE_ 0
     command_ SSD1306_SETREMAPMODE_1_
     command_ SSD1306_COMSCANDEC_
-    command_ SSD1306_SETCOMPINS_ 0x12
+    if h32px:
+      command_ SSD1306_SETCOMPINS_ 0x02
+    else:
+      command_ SSD1306_SETCOMPINS_ 0x12
     command_ SSD1306_SETCONTRAST_ 0xcf
     command_ SSD1306_SETPRECHARGE_ 0xf1
     command_ SSD1306_SETVCOMDETECT_ 0x30
